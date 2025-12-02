@@ -3,3 +3,4 @@ clang-format
 nrpypn
 sympy
 typing-extensions
+git+https://github.com/nrpy/nrpy.git
