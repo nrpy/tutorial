@@ -1,3 +1,59 @@
+"""Convert notebooks to and from this repository's percent-script format.
+
+The "percent" format handled here is a small, lossy, line-oriented subset of
+the Jupyter/Jupytext-style percent script convention. Its exact behavior is
+defined by this file:
+
+- Files are read and written as UTF-8 text. Line endings are normalized to
+  ``"\n"`` when written.
+- A physical script line is a cell marker when its first four characters are
+  exactly ``# %%``. Marker detection is global: it happens before code or
+  markdown cell content is interpreted, so any physical line beginning with
+  ``# %%`` starts a new cell.
+- A marker line containing the case-sensitive substring ``[markdown]`` anywhere
+  in the line creates a markdown cell. Every other marker line creates a code
+  cell. Other marker text is not preserved.
+- Lines before the first marker are discarded when converting a script to a
+  notebook. A script with no marker becomes an empty notebook.
+- Code cell content is all text from the line after a code marker up to, but
+  not including, the next marker. The lines are joined with ``"\n"`` and
+  ``rstrip()`` is applied to the cell source, so trailing blank lines and
+  trailing whitespace at the end of the cell are lost.
+- A literal code line that starts in column 0 with ``# %%`` cannot be
+  represented directly in this format because it is always parsed as the next
+  cell marker.
+- Markdown cell content is all text from the line after a markdown marker up
+  to, but not including, the next marker. Each markdown line is decoded as:
+
+  - ``# `` followed by text: remove exactly the first two characters. This is
+    what notebook-to-script conversion emits for nonblank markdown lines.
+  - ``#`` followed by anything else: remove the leading ``#`` and then strip
+    remaining leading whitespace. A bare ``#`` therefore encodes a blank
+    markdown line.
+  - Any non-``#`` line: keep it verbatim.
+
+  The decoded markdown lines are joined with ``"\n"`` and ``rstrip()`` is
+  applied to the cell source, so trailing blank lines and trailing whitespace at
+  the end of the cell are lost. To encode markdown text whose decoded content
+  begins with ``# %%``, prefix it as normal markdown content; for example,
+  ``# # %% not a marker`` decodes to ``# %% not a marker``.
+- Notebook-to-script conversion emits only code and markdown cells. Unsupported
+  cell types are skipped and reported on stdout. Outputs, execution counts,
+  notebook metadata, and cell metadata are not serialized into the percent file.
+- Script-to-notebook conversion creates a bare nbformat v4 notebook containing
+  only code and markdown cells.
+- Successful conversions print ``source -> destination`` on stdout.
+
+Minimal example:
+
+    # %% [markdown]
+    # # Title
+    #
+    # Markdown text.
+    # %%
+    print("hello")
+"""
+
 import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 from pathlib import Path
