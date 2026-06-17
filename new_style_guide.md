@@ -31,6 +31,11 @@ Review authority order:
 Historical artifacts that are not current style include:
 
 - old source links such as `../edit/...`;
+- source links that assume a local NRPy source checkout, such as
+  `../nrpy/nrpy/...`;
+- learner-facing source links, imports, or checks that pin tutorials to a
+  particular NRPy release instead of the current pip-installed package from the
+  install instructions;
 - silent concept-bearing cells;
 - absolute user-local paths;
 - object-only display reprs;
@@ -83,6 +88,73 @@ To run the whole notebook, click the `>>` toolbar button and choose
 
 Do not add a separate "Setup" step unless the notebook itself creates a
 workspace, writes files, builds an executable, or teaches environment setup.
+
+## NRPy Package and Source-Code Assumptions
+
+Active tutorials assume `nrpy` is installed into the notebook kernel's Python
+environment by following the tutorial install instructions. The default runtime
+contract is the latest pip-installed NRPy available through those instructions,
+not a repository-local source checkout and not a hard-coded historical package
+version.
+
+Do not assume the tutorial repository contains an NRPy source checkout at
+`nrpy/`, and do not require learners or reviewers to set `PYTHONPATH` to a local
+source tree.
+
+Learner-facing notebooks must import the installed package:
+
+```python
+import nrpy
+```
+
+Do not add notebook cells that repair imports by inserting repository-local
+source paths into `sys.path`, setting `PYTHONPATH`, or importing from a sibling
+`nrpy/` directory. Do not pin or check for a specific NRPy version in
+learner-facing tutorial cells unless the notebook is explicitly about
+environment or version management. If a reviewer needs to confirm the package
+being used, do it outside learner-facing cells or in the execution harness:
+
+```bash
+python - <<'PY'
+import importlib.metadata as metadata
+import nrpy
+
+print(nrpy.__file__)
+print(metadata.version("nrpy"))
+print(metadata.metadata("nrpy").get("Home-page"))
+PY
+```
+
+Tutorial code must remain compatible with the latest pip-installed NRPy that the
+setup notebook asks learners to install. If an API change in latest NRPy breaks
+a notebook, update the notebook to the current API instead of telling learners
+to install an older version.
+
+Source-code links for NRPy modules should point to the installed package's
+upstream source or documentation, using the package metadata as the authority
+for where that source lives. Use stable upstream URLs that describe the current
+public package API without requiring a local checkout or a particular package
+version. For example, derive the repository URL from package metadata and link
+to the relevant module path. If the current package metadata points to the NRPy
+GitHub repository, use the current public branch or documentation route rather
+than a release-specific URL:
+
+```markdown
+[reference metric source]:
+https://github.com/nrpy/nrpy/blob/main/nrpy/reference_metric.py
+```
+
+Version-pinned source links may be used in reviewer notes when auditing a
+specific historical output, but learner-facing notebooks should not imply that
+learners must install that exact NRPy version. Do not use version tags, release
+branches, or exact-version checks as tutorial requirements unless the notebook is
+explicitly about environment or version management. If the package metadata
+points to a different upstream source, branch, or documentation site, use that
+package metadata rather than assuming a repository layout.
+
+Local links such as `../nrpy/nrpy/reference_metric.py` are allowed only when the
+notebook family explicitly includes and tracks that source tree as part of the
+tutorial repository. The default active tutorial route must not use them.
 
 ## Archetype Selection Matrix
 
@@ -489,6 +561,9 @@ Additional requirements:
   that the notebook is fully self-contained.
 - Add source-code links when the notebook teaches a specific NRPy module or
   generated infrastructure.
+- For NRPy module links, follow the package/source-code contract above: links
+  must not assume a local `nrpy/` checkout, must not require `PYTHONPATH`, and
+  must not pin learner-facing notebooks to a particular NRPy release.
 - Source links must identify the module or generated infrastructure role, not
   merely point at a filename.
 - Add index, previous, and next links when the notebook belongs to an ordered
@@ -859,10 +934,15 @@ Rules:
 - Execution counts and outputs should not be a mixture of old and new runs.
 - Stored outputs must contain no warnings, tracebacks, or environment-repair
   messages.
+- Fresh execution must use the installed `nrpy` package from the tutorial install
+  instructions. Do not make clean execution depend on a repository-local
+  `nrpy/` checkout, `PYTHONPATH`, or a specific NRPy version.
 - External kernel-launch warnings belong in the execution harness, not in
   learner-facing notebook cells.
 - Do not add notebook cells solely to repair CI, cache, home-directory, or path
   problems.
+- If latest pip-installed NRPy changes an API, update the tutorial to the
+  current API rather than pinning the learner to an older package.
 - If a notebook intentionally leaves outputs cleared, document that exception in
   the same notebook family README or review policy.
 
@@ -951,6 +1031,10 @@ Rules:
 - Link text should describe the target task or concept, not just "here."
 - Links must resolve to existing notebooks, source files, documentation, or
   references.
+- Links to NRPy source must use upstream package source or documentation for the
+  current public API. Do not use local checkout paths or release-pinned source
+  URLs in learner-facing notebooks unless the lesson is explicitly about
+  environment or version management.
 - Avoid hype, jokes, vague motivational prose, and overcompressed API-reference
   prose.
 - Avoid saying "obvious" or "trivial" about physics, numerical analysis, or
@@ -1205,11 +1289,17 @@ documented as an explicit exception.
 
 - Pass: Notebook executes cleanly from a fresh kernel using
   `helpers/execute_notebooks.py`.
+- Pass: Notebook execution uses the latest pip-installed `nrpy` from the install
+  instructions and does not depend on a local `nrpy/` checkout, `PYTHONPATH`, or
+  a particular NRPy version.
 - Pass: `git status --short` after execution contains only intentional changes.
 - Pass: Stored outputs contain no warnings, tracebacks, stale execution state,
   or learner-facing environment repair messages.
 - Pass: Any notebook round-tripped through `helpers/converter.py` was
   re-executed and reviewed as `.ipynb`.
+- Blocker: Clean execution requires a repository-local NRPy source tree, import
+  path repair in learner-facing cells, or an exact NRPy version unless the
+  notebook explicitly teaches environment or version management.
 - Blocker: Converter use erased outputs or metadata and the notebook was not
   re-executed.
 
@@ -1217,6 +1307,8 @@ documented as an explicit exception.
 
 - Pass: Links are current and point to existing notebooks, source files,
   documentation, or references.
+- Pass: Learner-facing NRPy source links do not assume a local checkout and do
+  not pin the tutorial to a particular NRPy release.
 - Pass: Scientific provenance appears near first use of named equations,
   physical models, exact solutions, coordinate systems, numerical methods, or
   validation concepts.
@@ -1228,6 +1320,8 @@ documented as an explicit exception.
   order, gridfunction roles, and memory access before generated output.
 - Pass: Plots have labels, titles, legends when needed, and explanatory
   framing.
+- Blocker: A learner-facing NRPy source link, import, or setup instruction
+  requires a local source checkout or a particular NRPy release.
 
 ## Audit Basis
 
