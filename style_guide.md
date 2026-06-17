@@ -269,6 +269,10 @@ Rules:
 - Clean or recreate generated directories intentionally.
 - Do not depend on hidden current-directory state.
 - Do not use `sys.path` hacks in active NRPy2 notebooks.
+- Do not put execution-environment repair code in learner-facing notebooks
+  unless the environment is the concept being taught. Cache directories,
+  writable-home settings, and CI/kernel-launch settings belong in the test
+  harness, setup documentation, or NRPy internals.
 
 ### 8. Small Executable Cells with Visible Output
 
@@ -327,6 +331,10 @@ Preferred section names:
 Validation cells should fail loudly when the expected result is not obtained.
 Use `raise RuntimeError(...)` or an equivalent direct check.
 
+Prefer semantic validation over formatter-sensitive string matching. Use
+residuals, object metadata, parsed values, or minimal concept-bearing generated
+identifiers before checking exact generated-source text.
+
 ### 10. Validation as a Unit-Test Workflow
 
 Some old notebooks go beyond a final residual check: they teach how a test case
@@ -364,6 +372,8 @@ Rules:
 - Explain the tolerance in plain language.
 - Use analytic data when real data would hide the logic.
 - Make failure explicit.
+- Tie runtime checks to the concept being taught, not incidental whitespace or
+  pretty-printing in generated source.
 
 ### 11. Full Generated Artifacts When They Teach the Concept
 
@@ -448,6 +458,10 @@ similarity.
 Avoid long homework-style problem sets inside a first-pass tutorial. Link to
 extensions or solution notebooks when needed.
 
+Place prediction prompts before the cell they refer to. If the prompt appears
+after the computation, phrase it as reflection or explanation instead of
+"before running".
+
 ### 14. References and Scientific Provenance
 
 Physics-heavy tutorials should cite the model, equation, or paper where it first
@@ -481,6 +495,9 @@ Do not carry these old-notebook habits into NRPy2:
 - Large helper cells without an explanation of whether students should read
   them closely.
 - Source dumps without "what to look for" guidance.
+- Cache, path, or environment monkeypatches inside concept notebooks.
+- Formatter-sensitive validation that fails because generated whitespace or
+  pretty-printing changed.
 - Broken or speculative links.
 - Comments warning that removed notebooks may break links. Fix the links instead.
 
@@ -520,7 +537,8 @@ or in the sentence where it first appears.
 - Keep source-cell lines at or below 100 characters when practical.
 - Use multi-line calls for generated-code examples.
 - Use descriptive temporary variables before printing complex generated output.
-- Use assertions or explicit runtime checks for validation.
+- Use assertions or explicit runtime checks for validation, but keep those
+  checks tied to the concept being taught.
 - Set up workspaces explicitly in notebooks that write files.
 - Use full generated-file reads when the file itself is the lesson.
 - Keep helper functions in clearly marked cells.
@@ -565,6 +583,8 @@ Before merging a tutorial notebook, check:
 - Every meaningful code cell has visible evidence or a clear setup role.
 - The notebook includes a named validation section when it computes anything
   symbolic or numerical.
+- Validation checks target mathematics, metadata, generated identifiers, or
+  runtime behavior, not fragile whitespace in generated source.
 - Subtle algorithms show how their test case is built, not only the final
   pass/fail result.
 - Tables are used when learners must compare methods, parameters, variants, or
@@ -572,7 +592,9 @@ Before merging a tutorial notebook, check:
 - Generated source is complete when the source is concept-bearing.
 - Full source dumps include "what to look for" guidance.
 - The notebook executes cleanly from top to bottom.
-- Notebook validation passes with no warnings.
+- Stored notebook outputs contain no warnings, errors, or tracebacks. External
+  kernel-launch warnings from execution tools should be handled by the test
+  command or harness, not by adding environment hacks to the lesson.
 - There are no stale old NRPy+ names, deleted-notebook links, or historical
   setup hacks.
 
