@@ -152,6 +152,7 @@ def runtime_environment(
 def execute_notebook(
     notebook_path: Path, output_dir: Path | None, inplace: bool
 ) -> Path:
+    notebook_path = notebook_path.resolve()
     if not notebook_path.is_file():
         raise FileNotFoundError(f"Notebook does not exist: {notebook_path}")
     if notebook_path.suffix != ".ipynb":
@@ -173,6 +174,7 @@ def execute_notebook(
             executed_path = notebook_path
         else:
             assert output_dir is not None
+            output_dir = output_dir.resolve()
             output_dir.mkdir(parents=True, exist_ok=True)
             executed_path = output_dir / output_name_for(notebook_path)
             cmd.extend(
@@ -182,7 +184,7 @@ def execute_notebook(
 
         result = subprocess.run(
             cmd,
-            cwd=Path.cwd(),
+            cwd=notebook_path.parent,
             env=env,
             text=True,
             stdout=subprocess.PIPE,
