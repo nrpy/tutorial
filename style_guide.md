@@ -77,6 +77,48 @@ Short command-only setup notebooks may omit learning-goal scaffolding if a
 README-style quick start is clearer. They must remain markdown-only unless there
 is a strong reason to execute code.
 
+## Required Tutorial Constraints
+
+Apply these constraints when creating or reviewing active tutorial notebooks:
+
+- **Run-all instruction:** The opening block should tell learners how to run the
+  notebook from a clean state. Prefer: click the `>>` toolbar button and choose
+  **Restart Kernel and Run All Cells…**. Do not add a separate "Setup" step
+  unless the notebook itself creates a workspace, writes files, builds an
+  executable, or teaches environment setup.
+- **Ground first, name second:** Before defining variables, code objects, or
+  infrastructure terms, state the physical or algorithmic object they represent
+  and where it fits in the larger calculation. Avoid introducing disconnected
+  vocabulary and then explaining it later.
+- **Physics variables need physical meaning:** For equation notebooks, define
+  each main variable before using it in code. For example, in a wave-equation
+  tutorial, state what `u` represents, what auxiliary variables such as `v`
+  represent, and whether an "energy density" is energy per unit length, area,
+  volume, coordinate volume, or mass under the model's normalization.
+- **Use NRPy-style indexed notation when it teaches NRPy:** When an example is
+  meant to introduce NRPy's tensor machinery, start from Einstein-like notation,
+  show the indexed equation, then map each indexed object to the nested Python
+  representation and loops.
+- **C-function registration must be grounded in C-function structure:** Before a
+  first `register_CFunction()` example, show the shape of the C function being
+  registered: description comment, return type, function name, parameter list,
+  local declarations, and assignments. Then map those pieces to `desc`,
+  `cfunc_type`, `name`, `params`, `body`, and any required `includes`.
+- **BHaH registration examples must imitate BHaH practice exactly:** If a
+  tutorial says it follows the BHaH registration pattern, use the same shape as
+  BHaH infrastructure code: define the registration pieces as Python variables,
+  build or generate `body`, and pass those variables to `register_CFunction()`.
+  Do not add unrelated dictionary resets, debugging prints, or stored-object
+  inspection inside that registration example. Put tutorial evidence in a
+  separate validation or inspection cell if needed.
+- **No truncated notebook outputs:** Do not deliberately truncate cell output
+  with excerpts, ellipses, abbreviated source dumps, shortened arrays, or helper
+  functions that hide part of a concept-bearing result. If an output is too long
+  to be pedagogically useful, redesign the cell, split the artifact into
+  meaningful complete parts, or write and display complete generated files where
+  the file itself is the lesson. Reviewers must flag truncated stored outputs as
+  style violations.
+
 ## 14 Patterns to Preserve
 
 ### 1. Strong Opening Block
@@ -495,6 +537,8 @@ Do not carry these old-notebook habits into NRPy2:
 - Large helper cells without an explanation of whether students should read
   them closely.
 - Source dumps without "what to look for" guidance.
+- Truncated notebook outputs, abbreviated generated source, or ellipsis-based
+  excerpts when the omitted content is part of the concept being taught.
 - Cache, path, or environment monkeypatches inside concept notebooks.
 - Formatter-sensitive validation that fails because generated whitespace or
   pretty-printing changed.
@@ -557,6 +601,13 @@ Every important notebook should include at least one of:
 - file inventories.
 - catalog tables for methods, parameters, variants, or generated files.
 
+Do not truncate stored output from code cells. Avoid helper functions that print
+only selected lines, selected array entries, or generated-code excerpts when the
+complete output is needed to understand or verify the result. If a complete
+artifact is too long for a single output cell, split it into complete,
+meaningful sections or write generated files and display the full file contents
+that the lesson asks the learner to inspect.
+
 For numerical-methods notebooks, prefer visual evidence when it improves
 understanding:
 
@@ -591,12 +642,18 @@ Before merging a tutorial notebook, check:
   generated files.
 - Generated source is complete when the source is concept-bearing.
 - Full source dumps include "what to look for" guidance.
+- Stored code-cell outputs are not deliberately truncated, abbreviated, or
+  replaced by ellipsis-based excerpts.
 - The notebook executes cleanly from top to bottom.
 - Stored notebook outputs contain no warnings, errors, or tracebacks. External
   kernel-launch warnings from execution tools should be handled by the test
   command or harness, not by adding environment hacks to the lesson.
 - There are no stale old NRPy+ names, deleted-notebook links, or historical
   setup hacks.
+
+Use `helpers/execute_notebooks.py` for execution checks. It provides temporary
+runtime directories outside the lesson cells, so environment setup stays in the
+test harness instead of learner-facing notebooks.
 
 ## References
 
