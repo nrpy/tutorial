@@ -38,9 +38,19 @@ Navigation: [Index](../index.ipynb) | Previous: [...] | Next: [...]
 - **Term:** plain-language definition.
 - **Term:** plain-language definition.
 
+## Challenges
+
+Use this only when the notebook resolves non-obvious numerical, physical, or
+software obstacles.
+
 ## Optional Short Setup or Notation
 
 Use only when the first code cell needs symbols, conventions, or assumptions.
+
+## Workspace Setup
+
+Use this only for notebooks that generate files, build programs, or write
+diagnostics.
 
 ## Step 1: Specific Action
 
@@ -67,7 +77,7 @@ Short command-only setup notebooks may omit learning-goal scaffolding if a
 README-style quick start is clearer. They must remain markdown-only unless there
 is a strong reason to execute code.
 
-## 10 Patterns to Preserve
+## 14 Patterns to Preserve
 
 ### 1. Strong Opening Block
 
@@ -159,7 +169,41 @@ Use it for:
 Keep it short. A preliminaries section should prepare the first code cell, not
 become a textbook chapter.
 
-### 5. Math-to-Code Pairing
+### 5. Challenge-First Framing
+
+Several effective old notebooks begin difficult topics by naming the concrete
+obstacles. This is especially useful in computational physics, where the code
+often exists to handle a subtle failure mode.
+
+Use this for:
+
+- boundary-condition complications;
+- coordinate singularities;
+- floors, limiters, and physical bounds;
+- shock handling;
+- interpolation at faces or ghost zones;
+- multiple coordinate or implementation variants.
+
+Good:
+
+```markdown
+## Challenges
+
+- **Inner boundaries:** ghost-zone points may map back into the physical grid.
+- **Parity:** vector components may change sign across a mapped boundary.
+- **Coordinate singularities:** spherical coordinates are singular at the axis.
+
+The next sections address these one at a time.
+```
+
+Rules:
+
+- State the obstacle before presenting the solution.
+- Keep each challenge concrete.
+- Map each challenge to a later section, code cell, or validation check.
+- Do not use this section for generic motivation.
+
+### 6. Math-to-Code Pairing
 
 A high-value NRPy tutorial pattern is:
 
@@ -189,7 +233,44 @@ Rules:
 - Do not show code without saying which equation it represents.
 - Use residuals when possible: zero residuals are understandable evidence.
 
-### 6. Small Executable Cells with Visible Output
+### 7. Reproducible Workspace Setup
+
+Project-generation notebooks should make their file-writing behavior explicit.
+Many old start-to-finish and infrastructure notebooks created source directories
+or output folders before generating code. Keep the reproducibility goal, but use
+clean NRPy2-era paths and avoid old global path hacks.
+
+Use this when a notebook:
+
+- writes generated C files;
+- creates a project directory;
+- builds or runs an executable;
+- writes diagnostic outputs;
+- compares generated files against trusted files.
+
+Good:
+
+```python
+from pathlib import Path
+import tempfile
+
+workspace_manager = tempfile.TemporaryDirectory(
+    prefix="nrpy_tutorial_wave_", dir=Path.cwd()
+)
+WORKSPACE = Path(workspace_manager.name)
+PROJECT_DIR = WORKSPACE / "project" / "wave_equation_cartesian"
+print("workspace:", WORKSPACE)
+```
+
+Rules:
+
+- Print the workspace or project path.
+- Keep generated files in a predictable workspace.
+- Clean or recreate generated directories intentionally.
+- Do not depend on hidden current-directory state.
+- Do not use `sys.path` hacks in active NRPy2 notebooks.
+
+### 8. Small Executable Cells with Visible Output
 
 The best old notebooks interleave explanation, code, and evidence. Keep that.
 
@@ -220,7 +301,7 @@ Avoid:
 print(ccg.c_codegen([x + y, x * y, x**2 - y**2], ["sum_xy", "prod_xy", "diff_sq"], include_braces=False, enable_cse=False, verbose=False))
 ```
 
-### 7. Explicit Validation Sections
+### 9. Explicit Validation Sections
 
 Validation was one of the strongest recurring old-notebook patterns. Preserve it
 as a named section, not a hidden afterthought.
@@ -246,7 +327,45 @@ Preferred section names:
 Validation cells should fail loudly when the expected result is not obtained.
 Use `raise RuntimeError(...)` or an equivalent direct check.
 
-### 8. Full Generated Artifacts When They Teach the Concept
+### 10. Validation as a Unit-Test Workflow
+
+Some old notebooks go beyond a final residual check: they teach how a test case
+is built. Keep this pattern for algorithms where correctness is subtle.
+
+Use this when:
+
+- the notebook compares against trusted output;
+- arbitrary analytic fields are used as test data;
+- generated code is tested against another implementation;
+- a tolerance or error norm matters;
+- the notebook is about a reusable algorithm rather than a single formula.
+
+Recommended shape:
+
+```markdown
+## Build a Test Case
+
+Define analytic fields simple enough to evaluate, but rich enough to exercise
+all terms in the algorithm.
+
+## Run the New Calculation
+
+Generate or evaluate the NRPy2 result.
+
+## Compare Against Trusted Output
+
+Print the error, tolerance, and pass/fail result.
+```
+
+Rules:
+
+- State what is trusted and why.
+- State what is newly computed.
+- Explain the tolerance in plain language.
+- Use analytic data when real data would hide the logic.
+- Make failure explicit.
+
+### 11. Full Generated Artifacts When They Teach the Concept
 
 The old ETK, WaveToy, and infrastructure notebooks often exposed generated C,
 headers, CCL files, and build metadata. Keep this when the learner is meant to
@@ -272,7 +391,38 @@ The full `rhs_eval.c` file is printed below. On a first pass, look for:
 
 Generated output should be treated as evidence, not decoration.
 
-### 9. Exercises and Learning Checks
+### 12. Catalog Tables for Named Methods, Parameters, and Variants
+
+Many old notebooks use named dictionaries, tables, or catalogs: Butcher tables,
+Hamiltonian terms, runtime parameters, primitive-variable sets, coordinate
+choices, and generated files. Keep this when learners need to compare options.
+
+Use tables for:
+
+- method choices;
+- coordinate variants;
+- runtime parameters;
+- generated files and their roles;
+- named data structures;
+- test-case inputs and expected outputs.
+
+Good:
+
+```markdown
+| Name | Purpose | Where It Appears | What to Inspect |
+| --- | --- | --- | --- |
+| `wave_speed` | Sets propagation speed | parameter file | value used by RHS |
+| `rhs_eval.c` | Updates time derivatives | generated source | grid loop and RHS assignments |
+```
+
+Rules:
+
+- Each row should answer a learner's comparison question.
+- Keep columns few and concrete.
+- For code dictionaries, print or summarize keys before implementation details.
+- Do not use tables merely to make prose look organized.
+
+### 13. Exercises and Learning Checks
 
 Old NRPy+ notebooks used exercises less often than they used derivations and
 validation, but the exercise pattern is worth expanding in NRPy2.
@@ -298,7 +448,7 @@ similarity.
 Avoid long homework-style problem sets inside a first-pass tutorial. Link to
 extensions or solution notebooks when needed.
 
-### 10. References and Scientific Provenance
+### 14. References and Scientific Provenance
 
 Physics-heavy tutorials should cite the model, equation, or paper where it first
 matters. Several old notebooks did this well with links to arXiv, journal
@@ -371,6 +521,7 @@ or in the sentence where it first appears.
 - Use multi-line calls for generated-code examples.
 - Use descriptive temporary variables before printing complex generated output.
 - Use assertions or explicit runtime checks for validation.
+- Set up workspaces explicitly in notebooks that write files.
 - Use full generated-file reads when the file itself is the lesson.
 - Keep helper functions in clearly marked cells.
 - Tell beginners whether a helper cell should be skimmed or studied.
@@ -386,6 +537,7 @@ Every important notebook should include at least one of:
 - diagnostic tables;
 - plots;
 - file inventories.
+- catalog tables for methods, parameters, variants, or generated files.
 
 For numerical-methods notebooks, prefer visual evidence when it improves
 understanding:
@@ -408,9 +560,15 @@ Before merging a tutorial notebook, check:
 - The section headings are unique and action-oriented.
 - Specialized terms are defined locally.
 - Long Python lines are broken into readable blocks.
+- Complex algorithms name their concrete challenges before solving them.
+- File-generating notebooks set up and print an explicit workspace.
 - Every meaningful code cell has visible evidence or a clear setup role.
 - The notebook includes a named validation section when it computes anything
   symbolic or numerical.
+- Subtle algorithms show how their test case is built, not only the final
+  pass/fail result.
+- Tables are used when learners must compare methods, parameters, variants, or
+  generated files.
 - Generated source is complete when the source is concept-bearing.
 - Full source dumps include "what to look for" guidance.
 - The notebook executes cleanly from top to bottom.
@@ -447,3 +605,8 @@ set included core NRPy+ concept notebooks, finite-difference notebooks,
 reference-metric notebooks, scalar-wave start-to-finish notebooks, ETK thorn
 notebooks, BHaH notebooks, and IllinoisGRMHD documentation notebooks.
 
+It was then extended after a second audit of 36 additional randomly selected
+non-deprecated notebooks from the remaining `nrpytutorial/` pool, using random
+seed `20260617`. That second pass emphasized challenge-first framing,
+reproducible workspace setup, validation as a unit-test workflow, and catalog
+tables for named methods, parameters, and variants.
